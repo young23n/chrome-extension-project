@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Element Remover",
+  "version": "1.0",
+  "description": "현재 활성화 된 탭에서 클릭을 통해 요소를 제거해주는 확장입니다.",
+  "icons": {
+    "16": "icons/icon_16.png",
+    "32": "icons/icon_32.png",
+    "48": "icons/icon_48.png",
+    "128": "icons/icon_128.png"
+  },
+  "action": {
+    "default_title": "Remover",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "run_at": "document_idle",
+      "js": ["jquery.js", "contentScript.js"]
+    }
+  ]
+}
