@@ -1,9 +1,13 @@
 chrome.runtime.onMessage.addListener(function(message) { // 메세지를 받았을 때 이벤트 
   if (message === "apply") {  
     Inspector(function(obj) {
-      $(obj).css("display", "none"); // 요소제거
+      $(obj).css("display", "none"); // 요소제거하기
+      alert("class: "+ obj.class + " id: "+ obj.id +" url: " + window.location.href)
       saveElementInfo(obj.class, obj.id, window.location.href); // 요소 정보 저장
     });
+  }
+  else if(message === "cancel"){
+    cancelRemove();
   }
 });
 
@@ -11,7 +15,7 @@ chrome.runtime.onMessage.addListener(function(message) { // 메세지를 받았�
 var Inspector = function(cb) { 
   //style 요소 생성
   var style = document.createElement('style');
-ㅈㅁ
+
   //slyle에 마우스를 올리면 활성화될 css 넣기
   style.innerHTML = '.overTargetClass { border: 2px solid green !important; }';
 
@@ -29,7 +33,7 @@ var Inspector = function(cb) {
 
   //클릭시 
   function onclick(e) {
-    e.preventDefault();  // 클릭시 해당요소의 기본 행동 제거(하이퍼링크 클릭시 해당 사이트로 이동하지 못하게하는 등)
+    e.preventDefault();  // 클릭시 해당 요소의 기본 행동 제거(하이퍼링크 클릭시 해당 사이트로 이동하지 못하게 하는 등)
     e.stopPropagation();  // 이벤트 버블링 차단(자식의 행동이 부모에게 가지 못 하도록)
     deactiveFocus.call(this, e);// 마우스가 떠날 때 함수 호출(클릭 후 종료 해야하니)
     $("body")//이벤트 제거
@@ -82,8 +86,8 @@ var Inspector = function(cb) {
 
 function saveElementInfo(className, IdName, url) {
   chrome.storage.local.get("removedElements", function(result) { // 요소 정보 가져오기
-    var removedElements = result.removedElements || []; // 요소를 변수에 저장 result에 내용물이 있으면 저장 아니면 빈배열
-    removedElements.push({ class_name: className, id_name: IdName, url: url }); // 새로운 정보 푸쉬
+    var removedElements = result.removedElements || []; // 정보 or 빈배열 할당
+    removedElements.push({ class: className, id: IdName, url: url }); // 새로운 정보 푸시
     chrome.storage.local.set({ removedElements: removedElements }); // 저장
   });
 }
@@ -105,5 +109,34 @@ function removeElements() {
   });
 }
 
+function cancelRemove(){
+  chrome.storage.local.get("removedElements", function(result){
+    var removedElements = result.removedElements || [];
+    if (removedElements.length > 0) {
+      var lastRemoved = removedElements.pop(); // 가장 마지막에 제거된 요소 가져오기
+  
+      if (lastRemoved.class) {
+        $("." + lastRemoved.class).css("display", ""); // 요소 복구
+      }
+      if (lastRemoved.id) {
+        $("#" + lastRemoved.id).css("display", ""); // 요소 복구
+      }
+  
+      // 복구한 요소를 저장소에서도 제거
+      chrome.storage.local.get("removedElements", function(result) {
+        var storedRemovedElements = result.removedElements || [];
+        storedRemovedElements = storedRemovedElements.filter(function(element) {
+          return element.class !== lastRemoved.class || element.id !== lastRemoved.id;
+        });
+        chrome.storage.local.set({ removedElements: storedRemovedElements });
+      });
+      alert("취소 되었습니다.");
+    }
+    else{
+      alert("더 이상 취소할 것이 없습니다.");
+    }
+  })
+  
+}
 
 removeElements(); 
